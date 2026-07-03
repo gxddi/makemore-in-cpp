@@ -1,5 +1,5 @@
 # .clangd at project root
 CompileFlags:
   Add:
-    - -I/usr/local/Cellar/pytorch/2.12.1/include/
-    - -I/usr/local/Cellar/pytorch/2.12.1/include/torch/csrc/api/include/
+    - -I/home/gaddi/Development/learning/name_gen/deps/torch/include
+    - -I/home/gaddi/Development/learning/name_gen/deps/torch/include/torch/csrc/api/include/
