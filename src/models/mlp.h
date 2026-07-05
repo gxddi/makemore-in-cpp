@@ -42,9 +42,9 @@ public:
     return torch::nn::functional::cross_entropy(logits, Y);
   }
 
-  torch::Tensor backward(torch::Tensor loss) { loss.backward(); }
+  void backward(torch::Tensor loss) { loss.backward(); }
 
-  torch::Tensor grad_des(double lr) {
+  void grad_des(double lr) {
     torch::NoGradGuard no_grad;
 
     w1 = w1 - (w1.grad() * lr);
