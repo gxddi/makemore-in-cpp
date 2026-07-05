@@ -30,7 +30,7 @@ inline int get_xy(std::vector<std::string> &names, int context_len,
       int chx;
       for (int cx = (context_len - 1); (cx + 1) > 0; cx--) {
         if (cix - cx > 0) {
-          chx = (int)name[cix - cx];
+          chx = (int)name[cix - cx - 1] - 96;
         } else {
           chx = 0;
         }
@@ -41,7 +41,7 @@ inline int get_xy(std::vector<std::string> &names, int context_len,
       if (name[cix] == '\0') {
         chy = 0;
       } else {
-        chy = (int)name[cix];
+        chy = (int)name[cix] - 96;
       }
 
       y.push_back(chy);

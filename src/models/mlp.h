@@ -1,6 +1,7 @@
 #ifndef MLP_H
 #define MLP_H
 
+#include <ATen/xpu/XPUGeneratorImpl.h>
 #include <torch/torch.h>
 
 class MLP {
@@ -13,18 +14,25 @@ public:
   int context_len;
 
   MLP(int context_len) {
-    torch::Generator g =
-        torch::make_generator<torch::CPUGeneratorImpl>(2147483647);
+    // torch::Generator g =
+    torch::make_generator<torch::XPUGeneratorImpl>(2147483647);
     torch::TensorOptions options = torch::device(at::kXPU).requires_grad(true);
 
-    int emb_dim = 10;
+    int emb_dim = 20;
 
     this->context_len = context_len;
-    C = torch::randn({27, emb_dim}, g, options);
-    w1 = torch::randn({context_len * emb_dim, 300}, g, options);
-    b1 = torch::randn({300}, g, options);
-    w2 = torch::randn({300, 27}, g, options);
-    b2 = torch::randn({27}, g, options);
+    C = torch::randn({27, emb_dim}, options);
+    w1 = torch::randn({context_len * emb_dim, 500}, options);
+    b1 = torch::randn({500}, options);
+    w2 = torch::randn({500, 27}, options);
+    b2 = torch::randn({27}, options);
+
+    torch::NoGradGuard no_grad;
+    C.mul_(0.1);
+    w1.mul_(0.1);
+    b1.mul_(0.1);
+    w2.mul_(0.1);
+    b2.mul_(0.1);
   }
 
   torch::Tensor forward(torch::Tensor X) {
@@ -47,7 +55,17 @@ public:
   void grad_des(double lr) {
     torch::NoGradGuard no_grad;
 
-    w1 = w1 - (w1.grad() * lr);
+    C.sub_(C.grad() * lr);
+    w1.sub_(w1.grad() * lr);
+    b1.sub_(b1.grad() * lr);
+    w2.sub_(w2.grad() * lr);
+    b2.sub_(b2.grad() * lr);
+
+    C.grad().zero_();
+    w1.grad().zero_();
+    b1.grad().zero_();
+    w2.grad().zero_();
+    b2.grad().zero_();
   }
 };
 

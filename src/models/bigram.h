@@ -1,6 +1,7 @@
 #ifndef BIGRAM_H
 #define BIGRAM_H
 
+#include <ATen/xpu/XPUGeneratorImpl.h>
 #include <torch/torch.h>
 
 class Bigram {
@@ -9,7 +10,7 @@ public:
 
   Bigram() {
     torch::Generator g =
-        torch::make_generator<at::CPUGeneratorImpl>(2147483647);
+        torch::make_generator<at::XPUGeneratorImpl>(2147483647);
     w1 = torch::randn({27, 27}, g, torch::requires_grad(true));
   }
 
