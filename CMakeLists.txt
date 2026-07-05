@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Point to local torch installation
-set(CMAKE_PREFIX_PATH /usr/local/Cellar/pytorch/2.12.1/)
+set(CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/deps/torch/)
 
 find_package(Torch REQUIRED)
 
@@ -16,6 +16,8 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${TORCH_LIBRARIES})
 
+target_link_options(${PROJECT_NAME} PRIVATE "-Wl,-rpath,/opt/intel/oneapi/compiler/latest/linux/lib:/opt/intel/oneapi/compiler/latest/lib:/opt/intel/oneapi/mkl/latest/lib/intel64:/opt/intel/oneapi/ccl/latest/lib/cpu_gpu_dpcpp")
+
 if(WIN32)
     file(GLOB TORCH_DLLS ${CMAKE_PREFIX_PATH}/lib/*.dll)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -24,3 +26,7 @@ if(WIN32)
         $<TARGET_FILE_DIR:${PROJECT_NAME}>
     )
 endif()
+
+
+
+

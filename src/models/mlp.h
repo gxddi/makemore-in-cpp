@@ -14,17 +14,17 @@ public:
 
   MLP(int context_len) {
     torch::Generator g =
-        torch::make_generator<at::CPUGeneratorImpl>(2147483647);
-    torch::TensorOptions options = torch::requires_grad(true).device(
-        torch::kXPU); // .available() ? torch::kXPU, torch::kCPU);
+        torch::make_generator<torch::CPUGeneratorImpl>(2147483647);
+    torch::TensorOptions options = torch::device(at::kXPU).requires_grad(true);
 
     int emb_dim = 10;
+
     this->context_len = context_len;
-    C = torch::randn({27, emb_dim}, g, torch::requires_grad(true));
-    w1 = torch::randn({context_len * emb_dim, 300}, g);
-    b1 = torch::randn({300}, g);
-    w2 = torch::randn({300, 27}, g);
-    b2 = torch::randn({27}, g);
+    C = torch::randn({27, emb_dim}, g, options);
+    w1 = torch::randn({context_len * emb_dim, 300}, g, options);
+    b1 = torch::randn({300}, g, options);
+    w2 = torch::randn({300, 27}, g, options);
+    b2 = torch::randn({27}, g, options);
   }
 
   torch::Tensor forward(torch::Tensor X) {
