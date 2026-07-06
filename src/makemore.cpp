@@ -28,7 +28,7 @@ int main() {
   // Splice names into train/dev/val
   std::cout << "Splicing " << names.size() << " names...\n";
 
-  int cl = 5; // context length
+  int cl = 3; // context length
   std::vector<int> tx, ty, dx, dy, vx, vy;
   get_xy(tnames, cl, tx, ty);
   get_xy(dnames, cl, dx, dy);
@@ -48,7 +48,7 @@ int main() {
 
   for (int i = 0; i < 500000; i++) {
     torch::Tensor indices =
-        torch::randint(0, tX.size(0), {256}, device(at::kXPU).dtype(at::kInt));
+        torch::randint(0, tX.size(0), {512}, device(at::kXPU).dtype(at::kInt));
 
     torch::Tensor logits = simpleMLP.forward(tX.index_select(0, indices));
 
@@ -56,10 +56,10 @@ int main() {
 
     simpleMLP.backward(loss);
 
-    (i < 100000) ? lr = 0.1 : (i < 400000) ? lr = 0.01 : lr = 0.001;
+    (i < 100000) ? lr = 0.1 : lr = 0.01;
     simpleMLP.grad_des(lr);
 
-    if (i % 500 == 0)
+    if (i % 10000 == 0)
       std::cout << "Cycle " << i << " (Loss: " << loss.item() << ")\n";
   }
 

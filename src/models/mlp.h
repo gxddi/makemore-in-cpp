@@ -18,7 +18,7 @@ public:
     torch::make_generator<torch::XPUGeneratorImpl>(2147483647);
     torch::TensorOptions options = torch::device(at::kXPU).requires_grad(true);
 
-    int emb_dim = 20;
+    int emb_dim = 10;
 
     this->context_len = context_len;
     C = torch::randn({27, emb_dim}, options);
