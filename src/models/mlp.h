@@ -13,19 +13,19 @@ public:
   torch::Tensor b2;
   int context_len;
 
-  MLP(int context_len) {
-    // torch::Generator g =
-    torch::make_generator<torch::XPUGeneratorImpl>(2147483647);
+  MLP(int cl) {
+    torch::Generator g =
+        torch::make_generator<torch::XPUGeneratorImpl>(2147483647);
     torch::TensorOptions options = torch::device(at::kXPU).requires_grad(true);
 
     int emb_dim = 10;
+    context_len = cl;
 
-    this->context_len = context_len;
-    C = torch::randn({27, emb_dim}, options);
-    w1 = torch::randn({context_len * emb_dim, 500}, options);
-    b1 = torch::randn({500}, options);
-    w2 = torch::randn({500, 27}, options);
-    b2 = torch::randn({27}, options);
+    C = torch::randn({27, emb_dim}, g, options);
+    w1 = torch::randn({cl * emb_dim, 200}, g, options);
+    b1 = torch::randn({200}, g, options);
+    w2 = torch::randn({200, 27}, g, options);
+    b2 = torch::randn({27}, g, options);
 
     torch::NoGradGuard no_grad;
     C.mul_(0.1);
@@ -38,7 +38,7 @@ public:
   torch::Tensor forward(torch::Tensor X) {
     torch::Tensor xemb =
         torch::matmul(torch::one_hot(X, 27).to(torch::kFloat32), C);
-    xemb = xemb.view({-1, (context_len * C.size(1))});
+    xemb = xemb.view({-1, context_len * C.size(1)});
 
     torch::Tensor Z1 = torch::tanh(torch::matmul(xemb, w1) + b1);
     torch::Tensor Z2 = torch::matmul(Z1, w2) + b2;
