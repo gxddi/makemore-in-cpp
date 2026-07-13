@@ -13,16 +13,21 @@
 #include <vector>
 
 int main() {
-  std::cout << torch::xpu::is_available() << "\n";
-  // Get names from ../names.txt
+  // HYPERPARAMETERS
+  int cl = 5;       // Context len
+  int emb_dim = 10; // Embedding dimension
+  int hl = 200;     // Number neurons in the hidden layer
+
+  // Get names from ../names.txt and shuffle
   std::cout << "Getting names...\n";
-  std::ifstream file("../names.txt");
+  std::ifstream file("../names.txt"); // input filebuf stream
   std::vector<std::string> names;
   get_items(file, names);
-  std::mt19937 g(42); // shuffle names
-  std::shuffle(names.begin(), names.end(), g);
+  std::mt19937 r(42); // shuffle names
+  std::shuffle(names.begin(), names.end(), r);
 
-  // Split names into train/dev/val
+  // Split names into train (80%) / dev (10%) / val (10%)
+  std::cout << "Splicing " << names.size() << " names...\n";
   std::vector<std::string> tnames(names.begin(),
                                   names.begin() + (int)(0.8 * names.size()));
   std::vector<std::string> dnames(names.begin() +
@@ -31,12 +36,6 @@ int main() {
   std::vector<std::string> vnames(
       names.begin() + (int)((0.9 * names.size()) + 1), names.end());
 
-  // std::cout << "Training names:\n" << tnames << "\n";
-  // std::cout << "Dev names:\n" << dnames << "\n";
-
-  std::cout << "Splicing " << names.size() << " names...\n";
-
-  int cl = 5; // context length
   std::vector<int> tx, ty, dx, dy, vx, vy;
   get_xy(tnames, cl, tx, ty);
   get_xy(dnames, cl, dx, dy);
@@ -46,17 +45,17 @@ int main() {
   torch::Tensor tY = torch::tensor(ty, device(at::kXPU));
   torch::Tensor dX = torch::tensor(dx, device(at::kXPU)).view({-1, cl});
   torch::Tensor dY = torch::tensor(dy, device(at::kXPU));
-  // std::cout << "X (dev):\n" << dx << "\n";
-  // std::cout << "Y (dev):\n" << dy << "\n";
+  torch::Tensor vX = torch::tensor(vx, device(at::kXPU)).view({-1, cl});
+  torch::Tensor vY = torch::tensor(vy, device(at::kXPU));
 
   // Training
   std::cout << "Training...\n";
-  double lr;
-  torch::manual_seed(2147483647);
-  // Bigram simpleBG;
-  MLP simpleMLP(cl);
 
-  for (int i = 0; i < 300000; i++) {
+  // Bigram simpleBG;
+  MLP simpleMLP(cl, emb_dim, hl);
+
+  double lr;
+  for (int i = 0; i < 200000; i++) {
     torch::Tensor indices =
         torch::randint(0, tX.size(0), {32}, device(at::kXPU).dtype(at::kInt));
 
@@ -72,37 +71,42 @@ int main() {
     if (i % 10000 == 0) {
       std::cout << "Cycle " << i << " (Batch loss: " << loss.item() << ")\n";
       // Test w train set
-      torch::Tensor logits = simpleMLP.forward(tX);
-      torch::Tensor loss = simpleMLP.loss(logits, tY);
-      std::cout << "        (Training loss: " << loss.item() << ")\n";
+      torch::Tensor logits_t = simpleMLP.forward(tX);
+      torch::Tensor loss_t = simpleMLP.loss(logits_t, tY);
+      std::cout << "        (Training loss: " << loss_t.item() << ")\n";
 
       // Test w dev set
-      logits = simpleMLP.forward(dX);
-      loss = simpleMLP.loss(logits, dY);
-      std::cout << "        (Dev loss: " << loss.item() << ")\n";
+      torch::Tensor logits_d = simpleMLP.forward(dX);
+      torch::Tensor loss_d = simpleMLP.loss(logits_d, dY);
+      std::cout << "        (Dev loss: " << loss_d.item() << ")\n";
     }
   }
 
   // Final dev set test
-  torch::Tensor logits = simpleMLP.forward(dX);
-  torch::Tensor loss = simpleMLP.loss(logits, dY);
-  std::cout << "Final dev set loss: " << loss.item() << "\n";
+  torch::Tensor logits_d = simpleMLP.forward(dX, true);
+  torch::Tensor loss_d = simpleMLP.loss(logits_d, dY);
+  std::cout << "Final dev set loss: " << loss_d.item() << "\n";
 
-  // Generate names
+  // Final val set loss
+  torch::Tensor logits_v = simpleMLP.forward(vX, true);
+  torch::Tensor loss_v = simpleMLP.loss(logits_v, vY);
+  std::cout << "Final val set loss: " << loss_v.item() << "\n";
+
+  // Generate names with model
   std::cout << "Generating names...\n";
-  // torch::Generator g =
-  // torch::make_generator<at::XPUGeneratorImpl>(2147483647);
-  std::vector<std::string> gen_names = {};
 
-  for (int n = 0; n < 20; n++) {
+  torch::Generator g = torch::make_generator<at::XPUGeneratorImpl>(2147483647);
+  std::vector<std::string> gen_names;
+
+  for (int n = 0; n < 20; n++) { // 20 names
     std::string name("");
     std::vector<int> context(cl, 0);
 
     while (true) {
       torch::Tensor input = torch::tensor(context, device(at::kXPU));
-      torch::Tensor P = simpleMLP.forward(input).softmax(1);
+      torch::Tensor P = simpleMLP.forward(input, true).softmax(1);
 
-      int ch_ix = torch::multinomial(P, 1, true).item<int>();
+      int ch_ix = torch::multinomial(P, 1, false, g).item<int>();
 
       if (ch_ix == 0) {
         break;
