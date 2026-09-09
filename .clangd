@@ -1,5 +1,5 @@
 # .clangd at project root
 CompileFlags:
   Add:
-    - -I/home/gaddi/Development/learning/name_gen/deps/torch/include
-    - -I/home/gaddi/Development/learning/name_gen/deps/torch/include/torch/csrc/api/include/
+    - -I/home/gaddi/Development/learning/makemore/deps/torch/include
+    - -I/home/gaddi/Development/learning/makemore/deps/torch/include/torch/csrc/api/include/
