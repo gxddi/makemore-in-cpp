@@ -1,0 +1,38 @@
+![Makemore Neural Network](docs/makemore.png)
+# Makemore in C++
+
+Implementation of Karpathy's Makemore using libtorch's c++ backend.
+
+## Set up (Mac/Linux)
+
+### Building
+
+```bash
+# Clone repo
+git clone https://github.com/gxddi/makemore-in-c
+cd makemore-in-c
+
+# Setup dependencies
+./scripts/build.sh
+
+mkdir build | cd build
+cmake -S ../ -B ./
+make
+```
+
+Requirements:
+- cmake
+
+### Guide
+TBA
+
+## Motivations
+Provides lower level understanding of pytorch which surprisingly has a C++ backend it binds to.
+
+## AI contributions
+- Heavy contributions to docs/graphs.py, scripts/build.sh
+
+
+---
+
+#### Made with 🧠
