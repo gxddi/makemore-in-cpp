@@ -10,7 +10,7 @@ public:
   // Hyperparams
   int context_len;
   int emb_dim;
-  int n_w1;
+  int hid_dim;
 
   // Layers
   torch::Tensor C;
@@ -25,19 +25,20 @@ public:
   torch::Tensor bngain;
   torch::Tensor bnbias;
 
-  MLP(int cl, int ed, int hl) : context_len(cl), emb_dim(ed), n_w1(hl) {
+  MLP(int cl, int ed, int hd) : context_len(cl), emb_dim(ed), hid_dim(hd) {
     torch::Generator g =
         torch::make_generator<torch::XPUGeneratorImpl>(2147483647);
     torch::TensorOptions options = torch::device(at::kXPU).requires_grad(true);
 
     // Layers
     C = torch::randn({27, emb_dim}, g, options);
-    w1 = torch::randn({context_len * emb_dim, n_w1}, g, options);
-    b1 = torch::randn({n_w1}, g, options);
-    w2 = torch::randn({n_w1, 27}, g, options);
+    w1 = torch::randn({context_len * emb_dim, hid_dim}, g, options);
+    b1 = torch::randn({hid_dim}, g, options);
+    w2 = torch::randn({hid_dim, 27}, g, options);
     b2 = torch::randn({27}, g, options);
     {
       torch::NoGradGuard no_grad;
+      // Kaimin initialization
       w1.mul_((5.0 / 3.0) / sqrt((emb_dim * context_len)));
       b1.mul_(0.01);
       w2.mul_(0.1);
@@ -45,10 +46,10 @@ public:
     }
 
     // Batch normalization
-    bnmean_running = torch::zeros({1, n_w1}, options);
-    bnstd_running = torch::ones({1, n_w1}, options);
-    bngain = torch::ones({1, n_w1}, options);
-    bnbias = torch::zeros({1, n_w1}, options);
+    bnmean_running = torch::zeros({1, hid_dim}, options);
+    bnstd_running = torch::ones({1, hid_dim}, options);
+    bngain = torch::ones({1, hid_dim}, options);
+    bnbias = torch::zeros({1, hid_dim}, options);
   }
 
   torch::Tensor forward(torch::Tensor X, bool use_running = false) {

@@ -9,7 +9,7 @@
 
 // file -> ifstream to the file
 //
-inline int get_items(std::ifstream &file, std::vector<std::string> &items) {
+inline int load_items(std::ifstream &file, std::vector<std::string> &items) {
   std::string line;
   while (std::getline(file, line)) {
     items.push_back(line);
@@ -21,7 +21,7 @@ inline int get_items(std::ifstream &file, std::vector<std::string> &items) {
 // names -> string vector of names
 // context_len -> context len for x
 // x, y -> empty vectors to append x and y
-inline int get_xy(std::vector<std::string> &names, int context_len,
+inline int load_dataset(std::vector<std::string> &names, int context_len,
                   std::vector<int> &x, std::vector<int> &y) {
   for (int nix = 0; nix < names.size(); nix++) {
     std::string name = names[nix];
@@ -51,7 +51,7 @@ inline int get_xy(std::vector<std::string> &names, int context_len,
   return 0;
 }
 
-inline torch::Tensor get_bigram_counts(std::string *names, int nc) {
+inline torch::Tensor load_bigram_counts(std::string *names, int nc) {
   torch::Tensor N = torch::zeros({27, 27});
 
   for (int nix = 0; nix < nc; nix++) {

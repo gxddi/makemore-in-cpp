@@ -1,6 +1,6 @@
+#include "data/load.hpp"
 #include "models/bigram.h"
 #include "models/mlp.h"
-#include "tools/tools.h"
 
 #include <ATen/xpu/XPUGeneratorImpl.h>
 #include <torch/torch.h>
@@ -20,9 +20,9 @@ int main() {
 
   // Get names from ../names.txt and shuffle
   std::cout << "Getting names...\n";
-  std::ifstream file("../names.txt"); // input filebuf stream
+  std::ifstream file("../data/names.txt"); // input filebuf stream
   std::vector<std::string> names;
-  get_items(file, names);
+  load_items(file, names);
   std::mt19937 r(42); // shuffle names
   std::shuffle(names.begin(), names.end(), r);
 
@@ -37,9 +37,9 @@ int main() {
       names.begin() + (int)((0.9 * names.size()) + 1), names.end());
 
   std::vector<int> tx, ty, dx, dy, vx, vy;
-  get_xy(tnames, cl, tx, ty);
-  get_xy(dnames, cl, dx, dy);
-  get_xy(vnames, cl, vx, vy);
+  load_dataset(tnames, cl, tx, ty);
+  load_dataset(dnames, cl, dx, dy);
+  load_dataset(vnames, cl, vx, vy);
 
   torch::Tensor tX = torch::tensor(tx, device(at::kXPU)).view({-1, cl});
   torch::Tensor tY = torch::tensor(ty, device(at::kXPU));
