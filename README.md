@@ -1,7 +1,7 @@
 ![Makemore Neural Network](docs/makemore.png)
 # Makemore in C++
 
-Implementation of Karpathy's Makemore using libtorch's c++ backend.
+Implementation of Karpathy's Makemore using LibTorch, PyTorch's c++ backend.
 
 The following architectures are implemented:
 - Bigram language model
@@ -33,7 +33,9 @@ TBA
 ## Motivations
 Provides lower level understanding of pytorch which surprisingly has a C++ backend it binds to.
 
-## AI contributions
+## Contributions
+
+### AI contributions
 - Heavy contributions to docs/graphs.py, scripts/build.sh
 
 
