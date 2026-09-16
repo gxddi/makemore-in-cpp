@@ -4,7 +4,7 @@
 Implementation of Karpathy's Makemore using LibTorch, PyTorch's c++ backend.
 
 The following architectures are implemented:
-- Bigram language model
+- Bigram
 - MLP
 
 ## Set up (Mac/Linux)
