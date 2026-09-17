@@ -17,7 +17,7 @@ git clone https://github.com/gxddi/makemore-in-c
 cd makemore-in-c
 
 # Setup dependencies
-./scripts/build.sh
+./scripts/setup.sh
 
 mkdir build | cd build
 cmake -S ../ -B ./
@@ -26,6 +26,7 @@ make
 
 Requirements:
 - cmake
+- pip
 
 ### Guide
 TBA
@@ -36,7 +37,7 @@ Provides lower level understanding of pytorch which surprisingly has a C++ backe
 ## Contributions
 
 ### AI contributions
-- Heavy contributions to docs/graphs.py, scripts/build.sh
+- Heavy contributions to docs/graphs.py
 
 
 ---

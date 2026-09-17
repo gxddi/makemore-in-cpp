@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
+
+# Setup the dependencies: libtorch, openapi (if applicable)
+
 # Stop on errors, unset variables, and failed commands within pipelines.
 set -euo pipefail
 
 # Resolve paths relative to this script so it can be run from any directory.
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 deps_dir="${project_dir}/deps"
-packages_dir="${deps_dir}/packages"
-build_dir="${project_dir}/build"
+packages_dir="${project_dir}/packages"
 
 # Detect an Intel display controller by default. USE_XPU=0 or USE_XPU=1 can
 # override detection for containers, remote machines, or unsupported hardware.
@@ -48,7 +50,7 @@ fi
 # Reinstall when switching backends. Otherwise, reuse the existing download.
 backend=$([[ "${use_xpu}" == 1 ]] && echo xpu || echo cpu)
 installed_backend=$(cat "${deps_dir}/backend" 2>/dev/null || true)
-if [[ ! -f "${packages_dir}/torch/share/cmake/Torch/TorchConfig.cmake" \
+if [[ ! -f "${deps_dir}/torch/share/cmake/Torch/TorchConfig.cmake" \
     || "${installed_backend}" != "${backend}" ]]; then
     rm -rf "${packages_dir}"
     python3 -m pip install \
@@ -58,16 +60,11 @@ if [[ ! -f "${packages_dir}/torch/share/cmake/Torch/TorchConfig.cmake" \
     printf '%s\n' "${backend}" > "${deps_dir}/backend"
 fi
 
-# Present the pip-installed files using the paths expected by CMakeLists.txt.
-ln -sfn packages/torch "${deps_dir}/torch"
+# Extract libtorch into deps/
+mv "${packages_dir}"/torch "${deps_dir}/torch"
 if [[ "${use_xpu}" == 1 ]]; then
     # Intel runtime wheels place their lib/ and include/ trees here.
     ln -sfn packages "${deps_dir}/oneapi"
 else
     rm -f "${deps_dir}/oneapi"
 fi
-
-# Configure the matching CMake backend, then compile in parallel.
-cmake -S "${project_dir}" -B "${build_dir}" \
-    -DUSE_XPU="$([[ "${use_xpu}" == 1 ]] && echo ON || echo OFF)"
-cmake --build "${build_dir}" --parallel "${BUILD_JOBS:-$(nproc)}"
