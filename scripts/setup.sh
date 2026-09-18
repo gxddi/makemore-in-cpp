@@ -58,11 +58,20 @@ mv "$site_packages/torch/lib" "$deps_dir/torch/lib"
 
 # Extract oneAPI into deps/ (if applicable)
 if [[ "${use_xpu}" == 1 ]]; then
-    rm -rf "$deps_dir/oneapi"
+    rm -rf "$deps_dir/oneapi"/*
     mkdir -p "$deps_dir/oneapi/lib" "$deps_dir/oneapi/include"
 
     # Copy oneAPI/SYCL headers (CL/, sycl/, oneapi/, umf/, etc.), skipping python headers
-    find "$cache_dir/venv/include" -mindepth 1 -maxdepth 1 ! -name "python*" -exec cp -r {} "$deps_dir/oneapi/include/" \;
+    if [[ -d "$cache_dir/venv/include" ]]; then
+        shopt -s nullglob
+        for item in "$cache_dir/venv/include"/*; do
+            base_item="$(basename "$item")"
+            if [[ "$base_item" != python* ]]; then
+                cp -rL "$item" "$deps_dir/oneapi/include/"
+            fi
+        done
+        shopt -u nullglob
+    fi
 
     # Filter only required runtime libraries and their dlopen dependencies
     wanted_libs=(
@@ -85,22 +94,37 @@ if [[ "${use_xpu}" == 1 ]]; then
         "libiomp5.so*"
         "libtbb.so*"
 
+        # Intel compiler runtimes (needed by libOpenCL.so for _intel_fast_mem*)
+        "libimf.so*"
+        "libsvml.so*"
+        "libintlc.so*"
+        "libirng.so*"
+
+        # oneCCL runtime (needed by libtorch_xpu.so)
+        "libccl.so*"
+
         # MKL dispatch kernels
         "libmkl_def.so*"
         "libmkl_avx*.so*"
     )
 
+    shopt -s nullglob
     for pattern in "${wanted_libs[@]}"; do
-        find "$cache_dir/venv/lib" -maxdepth 1 -name "$pattern" -exec mv {} "$deps_dir/oneapi/lib/" \;
+        for matched_file in "$cache_dir/venv/lib"/$pattern; do
+            [[ -f "$matched_file" || -L "$matched_file" ]] && mv "$matched_file" "$deps_dir/oneapi/lib/"
+        done
     done
+    shopt -u nullglob
 
-    # In your setup script, right after moving the oneAPI libraries:
+    # Create unversioned .so symlinks for any versioned .so.* binaries
     (
-      cd "$deps_dir/oneapi/lib"
-      for f in *.so.*; do
-        base="${f%%.so.*}.so"
-        [[ ! -e "$base" ]] && ln -s "$f" "$base"
-      done
+        cd "$deps_dir/oneapi/lib"
+        shopt -s nullglob
+        for f in *.so.*; do
+            base="${f%%.so.*}.so"
+            [[ ! -e "$base" ]] && ln -s "$f" "$base"
+        done
+        shopt -u nullglob
     )
 else
     rm -rf "$deps_dir/oneapi"
