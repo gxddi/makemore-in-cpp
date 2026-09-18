@@ -25,6 +25,7 @@ make
 ```
 
 Requirements:
+- git
 - cmake
 - make
 - pip (for setup script)
