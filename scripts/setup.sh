@@ -8,7 +8,10 @@ set -euo pipefail
 # Resolve paths relative to script
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 deps_dir="${project_dir}/deps"
-packages_dir="${project_dir}/packages"
+cache_dir="${deps_dir}/cache"
+
+mkdir -p "${deps_dir}"
+mkdir -p "${cache_dir}"
 
 # Detect Intel display controller, USE_XPU=0 or USE_XPU=1 can hardcode detection
 case "${USE_XPU:-auto}" in
@@ -45,23 +48,26 @@ else
 fi
 
 # Install with pip
-rm -rf "${packages_dir}"
+rm -rf "${cache_dir}"
 python3 -m pip install \
-        --target "${packages_dir}" \
+        --target "${cache_dir}" \
         --index-url "${torch_index}" \
         "${torch_requirement}"
 
 # Extract libtorch into deps/
 mkdir -p "${deps_dir}/torch"
 rm -rf "${deps_dir}/torch/*"
-mv "${packages_dir}/torch/include" "${deps_dir}/torch/include"
-mv "${packages_dir}/torch/lib" "${deps_dir}/torch/lib"
+mv "${cache_dir}/torch/include" "${deps_dir}/torch/include"
+mv "${cache_dir}/torch/lib" "${deps_dir}/torch/lib"
 
-# Extrach OneApi if it it's used
+# Extract OneApi into deps/ (if applicable)
 if [[ "${use_xpu}" == 1 ]]; then
     mkdir -p "${deps_dir}/oneapi"
     rm -rf "${deps_dir}/oneapi/*"
-    mv "${packages_dir}"/* "${deps_dir}/oneapi/"
+    mv "${cache_dir}"/* "${deps_dir}/oneapi/"
 else
     rm -rf "${deps_dir}/oneapi"
 fi
+
+# Delete cache
+rm -rf "${cache_dir}"

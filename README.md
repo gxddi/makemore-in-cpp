@@ -26,7 +26,8 @@ make
 
 Requirements:
 - cmake
-- pip
+- make
+- pip (for setup script)
 
 ### Guide
 TBA
