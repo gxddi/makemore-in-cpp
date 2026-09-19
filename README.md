@@ -38,7 +38,7 @@ Provides lower level understanding of pytorch which surprisingly has a C++ backe
 
 ## Contributions
 
-### AI contributions
+### AI Contributions
 - Heavy contributions to docs/graphs.py
 
 
